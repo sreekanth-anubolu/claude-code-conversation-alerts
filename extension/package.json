@@ -1,0 +1,17 @@
+{
+  "name": "claude-code-conversation-alerts",
+  "displayName": "Conversation Alerts for Claude Code",
+  "description": "Not affiliated with Anthropic. Alerts you when a Claude Code conversation needs input or has finished, and opens that exact conversation in the right window.",
+  "publisher": "sreekanth-anubolu",
+  "author": "sreekanth-anubolu",
+  "license": "MIT",
+  "version": "1.0.0",
+  "engines": { "vscode": "^1.80.0" },
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished", "onUri"],
+  "contributes": {
+    "commands": [
+      { "command": "conversationAlerts.showList", "title": "Conversation Alerts: Show waiting conversations" }
+    ]
+  }
+}
