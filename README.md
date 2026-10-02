@@ -16,7 +16,11 @@ Works on macOS with VS Code and the Claude Code VS Code extension 2.1.233 or new
 
 ## Install
 
+    git clone https://github.com/sreekanth-anubolu/claude-code-conversation-alerts.git
+    cd claude-code-conversation-alerts
     ./install.sh
+
+`install.sh` also works from the unzipped `conversation-alerts.zip` package (see [Build from source](#build-from-source)).
 
 Then reload every VS Code window (Cmd+Shift+P → **Developer: Reload Window**).
 

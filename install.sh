@@ -3,6 +3,14 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Run from a git clone: build the package first, then install from it.
+if [ ! -f notify.py ] && [ -x build.sh ]; then
+  ./build.sh >/dev/null
+  rm -rf dist/conversation-alerts
+  (cd dist && unzip -q conversation-alerts.zip)
+  exec ./dist/conversation-alerts/install.sh
+fi
+
 ROOT="$HOME/.claude/conversation-alerts"
 CODE_CLI=$(command -v code || echo "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code")
 if [ ! -x "$CODE_CLI" ]; then
