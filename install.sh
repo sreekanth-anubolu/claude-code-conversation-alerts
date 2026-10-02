@@ -67,15 +67,32 @@ rm -rf "$HOME/.claude/vscode-notify" "$HOME/.claude/claude-notify"
 
 "$CODE_CLI" --install-extension conversation-alerts.vsix --force 2>&1 | grep -iv deprecat || true
 
-if ! command -v terminal-notifier >/dev/null && [ ! -x /opt/homebrew/bin/terminal-notifier ] && [ ! -x /usr/local/bin/terminal-notifier ]; then
-  echo
-  echo "Optional: for banners you can click when VS Code is in the background, run"
-  echo "    brew install terminal-notifier"
-  echo "Without it you still get a banner, but clicking it won't open the conversation."
-fi
+NOTIFIER=$(command -v terminal-notifier || true)
+for candidate in /opt/homebrew/bin/terminal-notifier /usr/local/bin/terminal-notifier; do
+  if [ -z "$NOTIFIER" ] && [ -x "$candidate" ]; then NOTIFIER="$candidate"; fi
+done
 
 echo
 echo "Installed. Now:"
 echo "  1. In every open VS Code window: Cmd+Shift+P → Developer: Reload Window"
-echo "  2. In System Settings → Notifications → terminal-notifier: allow notifications and pick the"
-echo "     Alerts style, so alerts stay on screen until you answer (Banners vanish after ~5 seconds)."
+
+if [ -z "$NOTIFIER" ]; then
+  echo "  2. Optional: for alerts you can click when VS Code is in the background, run"
+  echo "       brew install terminal-notifier"
+  echo "     then run ./install.sh again to allow its notifications."
+  exit 0
+fi
+
+# Allow terminal-notifier's notifications. The first notification makes macOS ask for permission.
+if "$NOTIFIER" -title "Conversation Alerts" -message "Notifications are on. Alerts will look like this." \
+     -group conversation-alerts-setup >/dev/null 2>&1; then
+  echo "  2. Notifications are allowed (you should see a test notification)."
+else
+  echo "  2. Allow notifications: macOS is blocking terminal-notifier. Opening System Settings…"
+  open "x-apple.systempreferences:com.apple.Notifications-Settings.extension" >/dev/null 2>&1 || true
+  echo "     Find terminal-notifier and turn on Allow notifications. If macOS just asked, click Allow."
+  echo "     Not in the list? Run this, then ./install.sh again so macOS asks:"
+  echo "       tccutil reset UserNotification fr.julienxx.oss.terminal-notifier"
+fi
+echo "  3. In System Settings → Notifications → terminal-notifier, choose the Alerts style, so alerts"
+echo "     stay on screen until you answer. With Banners they disappear after about 5 seconds."

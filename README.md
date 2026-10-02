@@ -54,11 +54,16 @@ Works on macOS with VS Code and the Claude Code VS Code extension 2.1.233 or new
     cd claude-code-conversation-alerts
     ./install.sh
 
+Then:
+
+1. **Reload** every VS Code window (Cmd+Shift+P → **Developer: Reload Window**).
+2. **Allow notifications** for clickable banners (optional, recommended):
+   - Run `brew install terminal-notifier`, then `./install.sh` again.
+   - The installer sends a test notification. When macOS asks, click **Allow**.
+   - If notifications are blocked, the installer opens System Settings → Notifications for you: find **terminal-notifier** and turn on **Allow notifications**.
+3. **Choose the Alerts style** in System Settings → Notifications → **terminal-notifier**. Banners disappear after about 5 seconds; Alerts stay until you answer, and are removed for you once you do.
+
 `install.sh` also works from the unzipped `conversation-alerts.zip` package (see [Build from source](#build-from-source)).
-
-Then reload every VS Code window (Cmd+Shift+P → **Developer: Reload Window**).
-
-For banners you can click, also run `brew install terminal-notifier`. Then in System Settings → Notifications → **terminal-notifier**, allow notifications and choose the **Alerts** style. With the Banners style they disappear after about 5 seconds; Alerts stay until you answer, and are removed for you once you do.
 
 ## Uninstall
 
