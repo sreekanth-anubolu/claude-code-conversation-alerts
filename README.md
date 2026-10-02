@@ -51,21 +51,9 @@ For banners you can click, also run `brew install terminal-notifier` and allow i
 
 This writes `dist/conversation-alerts.vsix` and `dist/conversation-alerts.zip`, the package with the install script. No Node or npm needed.
 
-## Prior art and thanks
+## Inspired by
 
-This was written from scratch, but several ideas came from these projects. Thank you to their authors:
-
-| Idea | From |
-|---|---|
-| Show the alert inside the editor when it's focused, and an OS banner otherwise, never both | [dimokol/claude-notifications](https://github.com/dimokol/claude-notifications) |
-| Showing the conversation title in the alert | [dimokol/claude-notifications](https://github.com/dimokol/claude-notifications) |
-| A status-bar count and list of waiting conversations | [ryuk2098/claude-code-notify](https://github.com/ryuk2098/claude-code-notify) |
-| Repeating the alert while unanswered, with one claim file per time slot so only one window repeats it | [ryuk2098/claude-code-notify](https://github.com/ryuk2098/claude-code-notify) |
-| A per-window registry file of open folders | [ryuk2098/claude-code-notify](https://github.com/ryuk2098/claude-code-notify) |
-| Clearing an alert once the conversation is answered | [ryuk2098/claude-code-notify](https://github.com/ryuk2098/claude-code-notify), [Tri9ster/hooknotice](https://github.com/Tri9ster/hooknotice) |
-| Removing a banner with `terminal-notifier -remove` | [zekunyan/claude-code-notifier-plus](https://github.com/zekunyan/claude-code-notifier-plus) |
-
-Other projects in this space worth a look: [Louis-CFM/coucou](https://github.com/Louis-CFM/coucou), [PeonPing/peon-ping](https://github.com/PeonPing/peon-ping) and [krsnasgr/claude-notify](https://github.com/krsnasgr/claude-notify).
+[dimokol/claude-notifications](https://github.com/dimokol/claude-notifications), [ryuk2098/claude-code-notify](https://github.com/ryuk2098/claude-code-notify), [Tri9ster/hooknotice](https://github.com/Tri9ster/hooknotice) and [zekunyan/claude-code-notifier-plus](https://github.com/zekunyan/claude-code-notifier-plus).
 
 ## License
 
