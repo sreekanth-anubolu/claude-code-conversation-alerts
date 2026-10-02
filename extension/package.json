@@ -5,13 +5,78 @@
   "publisher": "sreekanth-anubolu",
   "author": "sreekanth-anubolu",
   "license": "MIT",
-  "version": "1.0.0",
-  "engines": { "vscode": "^1.80.0" },
+  "version": "1.1.0",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
   "main": "./extension.js",
-  "activationEvents": ["onStartupFinished", "onUri"],
+  "activationEvents": [
+    "onStartupFinished",
+    "onUri"
+  ],
   "contributes": {
     "commands": [
-      { "command": "conversationAlerts.showList", "title": "Conversation Alerts: Show waiting conversations" }
-    ]
+      {
+        "command": "conversationAlerts.showList",
+        "title": "Conversation Alerts: Show waiting conversations"
+      },
+      {
+        "command": "conversationAlerts.chooseSounds",
+        "title": "Conversation Alerts: Choose sounds"
+      }
+    ],
+    "configuration": {
+      "title": "Conversation Alerts",
+      "properties": {
+        "conversationAlerts.needsInputSound": {
+          "type": "string",
+          "enum": [
+            "Siren",
+            "Basso",
+            "Blow",
+            "Bottle",
+            "Frog",
+            "Funk",
+            "Glass",
+            "Hero",
+            "Morse",
+            "Ping",
+            "Pop",
+            "Purr",
+            "Sosumi",
+            "Submarine",
+            "Tink",
+            "Custom",
+            "Off"
+          ],
+          "default": "Siren",
+          "markdownDescription": "Sound when a conversation needs your input (also used for the repeat reminder). `Custom` plays your own file; pick it with **Conversation Alerts: Choose sounds**. `Off` is silent."
+        },
+        "conversationAlerts.finishedSound": {
+          "type": "string",
+          "enum": [
+            "Siren",
+            "Basso",
+            "Blow",
+            "Bottle",
+            "Frog",
+            "Funk",
+            "Glass",
+            "Hero",
+            "Morse",
+            "Ping",
+            "Pop",
+            "Purr",
+            "Sosumi",
+            "Submarine",
+            "Tink",
+            "Custom",
+            "Off"
+          ],
+          "default": "Glass",
+          "markdownDescription": "Sound when Claude finishes and it's your turn. `Custom` plays your own file; pick it with **Conversation Alerts: Choose sounds**. `Off` is silent."
+        }
+      }
+    }
   }
 }

@@ -13,10 +13,16 @@ const WINDOWS = path.join(ROOT, "windows");
 const CLAIMS = path.join(ROOT, "claims");
 const MUTED_UNTIL = path.join(ROOT, "muted_until");
 const PENDING_OPEN = path.join(ROOT, "pending-open.json");
-const SOUNDS = {
-  waiting: path.join(ROOT, "siren.wav"),
-  finished: "/System/Library/Sounds/Glass.aiff",
-};
+// Sound choices live in VS Code settings; they're copied here so the hook plays the same ones.
+const SOUND_CONFIG = path.join(ROOT, "sounds.json");
+const SOUND_SETTINGS = { waiting: "needsInputSound", finished: "finishedSound" };
+const DEFAULT_SOUNDS = { waiting: "Siren", finished: "Glass" };
+const SYSTEM_SOUNDS = "/System/Library/Sounds";
+const SOUND_NAMES = [
+  "Siren", "Basso", "Blow", "Bottle", "Frog", "Funk", "Glass", "Hero",
+  "Morse", "Ping", "Pop", "Purr", "Sosumi", "Submarine", "Tink",
+];
+let previewProcess = null;
 
 const REPEAT_MS = 2 * 60 * 1000; // repeat the siren while a conversation is still waiting
 const FINISHED_TTL_MS = 60 * 60 * 1000;
@@ -43,8 +49,14 @@ function activate(context) {
   context.subscriptions.push(
     statusItem,
     vscode.commands.registerCommand("conversationAlerts.showList", showList),
+    vscode.commands.registerCommand("conversationAlerts.chooseSounds", chooseSounds),
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("conversationAlerts")) writeSoundConfig();
+    }),
     vscode.window.registerUriHandler({ handleUri })
   );
+
+  writeSoundConfig();
 
   // Rebuild state from history without alerting, then follow new events.
   readEvents(false);
@@ -193,8 +205,97 @@ function isConversationVisible(title) {
 
 function playSound(state) {
   if (process.platform !== "darwin" || isMuted()) return;
-  const sound = SOUNDS[state];
-  if (fs.existsSync(sound)) spawn("afplay", [sound], { detached: true, stdio: "ignore" }).unref();
+  const sound = soundPath(state, soundSetting(state));
+  if (sound) spawn("afplay", [sound], { detached: true, stdio: "ignore" }).unref();
+}
+
+// ---- sound choice
+
+function soundSetting(state) {
+  return vscode.workspace.getConfiguration("conversationAlerts").get(SOUND_SETTINGS[state]);
+}
+
+// The file for a sound name: Siren, a macOS sound, Custom, or Off (null). Same rules as the hook.
+function soundPath(state, name) {
+  if (!name || name === "Off") return null;
+  let file;
+  if (name === "Siren") file = path.join(ROOT, "siren.wav");
+  else if (name === "Custom") file = customSoundFile(state);
+  else file = path.join(SYSTEM_SOUNDS, path.basename(name) + ".aiff");
+  if (file && fs.existsSync(file)) return file;
+  // e.g. Custom chosen but no file: use the default sound, not silence.
+  const fallback = DEFAULT_SOUNDS[state];
+  return name !== fallback ? soundPath(state, fallback) : null;
+}
+
+function customSoundFile(state) {
+  const name = safeReaddir(ROOT).sort().find((f) => f.startsWith(`custom-${state}.`));
+  return name ? path.join(ROOT, name) : null;
+}
+
+function writeSoundConfig() {
+  writeJsonAtomic(SOUND_CONFIG, { waiting: soundSetting("waiting"), finished: soundSetting("finished") });
+}
+
+function preview(file) {
+  if (previewProcess) previewProcess.kill();
+  previewProcess = file ? spawn("afplay", [file], { stdio: "ignore" }) : null;
+}
+
+async function chooseSounds() {
+  const which = await vscode.window.showQuickPick(
+    [
+      { label: "$(alert) Needs input", description: soundSetting("waiting"), state: "waiting" },
+      { label: "$(check) Finished", description: soundSetting("finished"), state: "finished" },
+    ],
+    { placeHolder: "Which alert's sound do you want to change?" }
+  );
+  if (!which) return;
+  const state = which.state;
+  const current = soundSetting(state);
+
+  const items = [...SOUND_NAMES, "Custom", "Off"].map((name) => ({
+    label: name === "Custom" ? "$(folder-opened) Custom…" : name === "Off" ? "$(mute) Off" : name,
+    description: name === current ? "current" : name === "Custom" && customSoundFile(state) ? "your file" : "",
+    name,
+  }));
+  const picker = vscode.window.createQuickPick();
+  picker.items = items;
+  picker.placeholder = "Move through the list to hear each sound, then press Enter";
+  picker.activeItems = items.filter((i) => i.name === current);
+  picker.onDidChangeActive(([item]) => item && preview(soundPath(state, item.name)));
+
+  const picked = await new Promise((resolve) => {
+    picker.onDidAccept(() => resolve(picker.selectedItems[0]));
+    picker.onDidHide(() => resolve(undefined));
+    picker.show();
+  });
+  picker.dispose();
+  preview(null);
+  if (!picked) return;
+
+  if (picked.name === "Custom" && !(await copyCustomSound(state))) return;
+  await vscode.workspace
+    .getConfiguration("conversationAlerts")
+    .update(SOUND_SETTINGS[state], picked.name, vscode.ConfigurationTarget.Global);
+  preview(soundPath(state, picked.name));
+}
+
+// Copies the chosen file to ~/.claude/conversation-alerts/custom-<state>.<ext>.
+async function copyCustomSound(state) {
+  const [file] =
+    (await vscode.window.showOpenDialog({
+      canSelectMany: false,
+      openLabel: "Use this sound",
+      filters: { Audio: ["aiff", "aif", "wav", "mp3", "m4a", "caf"] },
+    })) || [];
+  if (!file) return false;
+  for (const old of safeReaddir(ROOT)) {
+    if (old.startsWith(`custom-${state}.`)) tryRemove(path.join(ROOT, old));
+  }
+  const ext = path.extname(file.fsPath).toLowerCase() || ".aiff";
+  fs.copyFileSync(file.fsPath, path.join(ROOT, `custom-${state}${ext}`));
+  return true;
 }
 
 // Every window ticks, but a claim file per time slot lets only one of them repeat the siren.
@@ -312,6 +413,7 @@ async function showList() {
     isMuted()
       ? { label: "$(bell) Unmute", action: "unmute" }
       : { label: "$(bell-slash) Mute sounds for 1 hour", action: "mute" },
+    { label: "$(unmute) Choose sounds…", action: "sounds" },
   ];
   if ([...sessions.values()].some((s) => s.state === "finished")) {
     actions.push({ label: "$(clear-all) Clear finished", action: "clear" });
@@ -324,6 +426,7 @@ async function showList() {
   if (picked.session) openConversation(picked.session);
   else if (picked.action === "mute") fs.writeFileSync(MUTED_UNTIL, String(Date.now() / 1000 + 3600));
   else if (picked.action === "unmute") tryRemove(MUTED_UNTIL);
+  else if (picked.action === "sounds") return chooseSounds();
   else if (picked.action === "clear") {
     for (const [id, s] of sessions) if (s.state === "finished") appendEvent({ session: id, state: "seen" });
   }

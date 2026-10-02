@@ -40,6 +40,12 @@ Works on macOS with VS Code and the Claude Code VS Code extension 2.1.233 or new
 - **Clears by itself** when you reply, approve the tool, Claude finishes, or the conversation ends. The macOS banner is removed too. Finished items also drop off after an hour.
 - **Mute sounds for an hour** from the list, or clear all finished items. The alerts still show while muted.
 
+### Sounds
+
+- **Pick your own sound** for "needs input" and for "finished": click the status bar → **Choose sounds…**, or run **Conversation Alerts: Choose sounds**. Each sound plays as you move through the list.
+- **Choices:** Siren (default for needs input), the built-in macOS sounds (Basso, Blow, Bottle, Frog, Funk, Glass, Hero, Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink; Glass is the default for finished), **Custom…** for any audio file of your own (AIFF, WAV, MP3, M4A, CAF), or **Off**.
+- Also in VS Code's Settings as **Conversation Alerts: Needs Input Sound** and **Finished Sound**. The banner and the repeat reminder use the same choice.
+
 ### Quiet and safe
 
 - **No false alarms:** subagents and Claude's own background work never alert, and the repeating "idle" notification is ignored.
@@ -71,7 +77,6 @@ Then:
 
 ## Good to know
 
-- To use a different siren, replace `~/.claude/conversation-alerts/siren.wav` with any WAV file. Reinstalling puts the original back.
 - Everything lives in `~/.claude/conversation-alerts/`. Nothing is added to any project.
 - If you deny a permission prompt, the alert stays until Claude replies or you send a message, because Claude Code sends no hook for a denial.
 - **Open conversation** uses an undocumented command of the Claude Code extension. If an update breaks it, the alerts still work.

@@ -11,6 +11,7 @@ append-only event log that the Conversation Alerts VS Code extension watches.
 If a VS Code window is focused, that window shows the alert and plays the
 sound. Otherwise this hook shows a macOS banner and plays the sound itself.
 """
+import glob
 import json
 import os
 import re
@@ -26,10 +27,10 @@ WINDOWS = os.path.join(ROOT, "windows")
 PENDING = os.path.join(ROOT, "pending")
 MUTED_UNTIL = os.path.join(ROOT, "muted_until")
 
-SOUNDS = {
-    "waiting": os.path.join(ROOT, "siren.wav"),
-    "finished": "/System/Library/Sounds/Glass.aiff",
-}
+# Sound choices, written by the VS Code extension from its settings.
+SOUND_CONFIG = os.path.join(ROOT, "sounds.json")
+DEFAULT_SOUNDS = {"waiting": "Siren", "finished": "Glass"}
+SYSTEM_SOUNDS = "/System/Library/Sounds"
 # Notification types that mean Claude is blocked on you. idle_prompt is left
 # out because Stop already covers "your turn" and idle_prompt repeats.
 WAITING_TYPES = {
@@ -217,10 +218,40 @@ def terminal_notifier():
 def play_sound(state):
     if sys.platform != "darwin" or muted():
         return
-    sound = SOUNDS[state]
-    if os.path.exists(sound):
+    sound = sound_path(state)
+    if sound:
         subprocess.Popen(["afplay", sound], start_new_session=True,
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def sound_path(state):
+    """The file for the chosen sound: Siren, a macOS sound name, Custom, or Off (None)."""
+    try:
+        with open(SOUND_CONFIG) as f:
+            name = json.load(f).get(state) or DEFAULT_SOUNDS[state]
+    except (OSError, ValueError):
+        name = DEFAULT_SOUNDS[state]
+    if name == "Off":
+        return None
+    if name == "Siren":
+        path = os.path.join(ROOT, "siren.wav")
+    elif name == "Custom":
+        # The extension copies your file here, keeping its extension (e.g. custom-waiting.mp3).
+        matches = sorted(glob.glob(os.path.join(ROOT, f"custom-{state}.*")))
+        path = matches[0] if matches else ""
+    else:
+        path = os.path.join(SYSTEM_SOUNDS, os.path.basename(name) + ".aiff")
+    if os.path.exists(path):
+        return path
+    if name != DEFAULT_SOUNDS[state]:
+        return default_sound_path(state)  # e.g. Custom chosen but no file: use the default, not silence
+    return None
+
+
+def default_sound_path(state):
+    if DEFAULT_SOUNDS[state] == "Siren":
+        return os.path.join(ROOT, "siren.wav")
+    return os.path.join(SYSTEM_SOUNDS, DEFAULT_SOUNDS[state] + ".aiff")
 
 
 def muted():
