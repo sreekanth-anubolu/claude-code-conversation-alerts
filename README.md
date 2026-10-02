@@ -4,15 +4,49 @@ Running several Claude Code conversations in VS Code? Conversation Alerts tells 
 
 > Not affiliated with or endorsed by Anthropic. "Claude" and "Claude Code" are trademarks of Anthropic.
 
-- 🚨 **Needs input** (permission prompt, question, MCP form): a siren, and an alert naming the project and the conversation.
-- ✓ **Finished**, your turn: a softer sound and alert. Skipped if you're already looking at that conversation.
-- **Open conversation** brings up the right VS Code window and opens that exact conversation in the Claude Code chat panel, even across several windows.
-- **In VS Code** you get a VS Code notification. **In another app** you get a macOS banner instead, never both.
-- **Status bar**: `🔔 2 waiting ✓ 1`. Click it to list conversations and jump to one, or to mute sounds for an hour.
-- **Repeats** the siren about every 2 minutes while something is still waiting, and clears as soon as you answer.
-- Subagents never alert. The hooks run in the background, so Claude is never slowed down.
-
 Works on macOS with VS Code and the Claude Code VS Code extension 2.1.233 or newer.
+
+## Features
+
+### What it alerts you about
+
+- 🚨 **Needs input**, with a siren:
+  - a permission prompt ("Claude needs your permission to use Bash")
+  - a question from Claude ("Claude has a question for you")
+  - an MCP server's form or browser link
+  - a background agent that needs you
+- ✓ **Finished, your turn**, with a softer sound. The alert shows the first line of Claude's reply.
+- Every alert names the **project and the conversation**, using the same title as the Claude tab (your custom title, or Claude's own).
+
+### Where the alert appears
+
+- **In VS Code:** a VS Code notification in the window you're using. It's yellow for "needs input" and blue for "finished".
+- **In another app:** a macOS banner instead. You never get both.
+- **One alert per event,** however many VS Code windows you have open.
+- **No "finished" alert for the conversation you're already looking at.**
+
+### Getting to the conversation
+
+- **Open conversation** (on the alert, the banner or the list) opens that exact conversation in the Claude Code chat panel.
+- **The right window:** if the conversation belongs to another VS Code window, that window comes to the front first.
+- **Not open anywhere:** if no window has the project open, it opens the project in a new window, then the conversation.
+- Conversations started in a subfolder or git worktree still find their window.
+
+### Keeping track
+
+- **Status bar:** shows `🔔 2 waiting ✓ 1`, and turns yellow while anything is waiting.
+- **List:** click the status bar, or run **Conversation Alerts: Show waiting conversations**, to see every waiting and finished conversation with how long ago it happened. Pick one to jump to it.
+- **Repeats** the siren about every 2 minutes while a conversation is still waiting. Only one window plays it.
+- **Clears by itself** when you reply, approve the tool, Claude finishes, or the conversation ends. The macOS banner is removed too. Finished items also drop off after an hour.
+- **Mute sounds for an hour** from the list, or clear all finished items. The alerts still show while muted.
+
+### Quiet and safe
+
+- **No false alarms:** subagents and Claude's own background work never alert, and the repeating "idle" notification is ignored.
+- **Never slows Claude down:** the hooks run in the background.
+- **Stays on your Mac:** no network calls, and the event log is readable only by you.
+- **Light:** needs only `python3` and VS Code. `terminal-notifier` is optional, for clickable banners. No Node or npm.
+- **Safe install:** backs up `~/.claude/settings.json`, keeps your other settings and hooks, and changes nothing if the file isn't valid JSON. Running it again is harmless, and it upgrades older versions. `uninstall.sh` removes everything it added.
 
 ## Install
 
@@ -32,7 +66,7 @@ For banners you can click, also run `brew install terminal-notifier` and allow i
 
 ## Good to know
 
-- Install adds five hooks to `~/.claude/settings.json`, backs the file up first, and keeps all your other settings and hooks. If the file isn't valid JSON, it changes nothing.
+- To use a different siren, replace `~/.claude/conversation-alerts/siren.wav` with any WAV file. Reinstalling puts the original back.
 - Everything lives in `~/.claude/conversation-alerts/`. Nothing is added to any project.
 - If you deny a permission prompt, the alert stays until Claude replies or you send a message, because Claude Code sends no hook for a denial.
 - **Open conversation** uses an undocumented command of the Claude Code extension. If an update breaks it, the alerts still work.
