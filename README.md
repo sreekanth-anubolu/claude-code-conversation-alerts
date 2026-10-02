@@ -58,7 +58,7 @@ Works on macOS with VS Code and the Claude Code VS Code extension 2.1.233 or new
 
 Then reload every VS Code window (Cmd+Shift+P → **Developer: Reload Window**).
 
-For banners you can click, also run `brew install terminal-notifier` and allow its notifications in System Settings → Notifications.
+For banners you can click, also run `brew install terminal-notifier`. Then in System Settings → Notifications → **terminal-notifier**, allow notifications and choose the **Alerts** style. With the Banners style they disappear after about 5 seconds; Alerts stay until you answer, and are removed for you once you do.
 
 ## Uninstall
 

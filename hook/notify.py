@@ -13,6 +13,7 @@ sound. Otherwise this hook shows a macOS banner and plays the sound itself.
 """
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -109,7 +110,10 @@ def waiting_message(message):
 
 
 def first_line(text):
+    """First non-empty line of Claude's reply, as plain text."""
     for line in (text or "").splitlines():
+        line = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", line)  # [label](url) -> label
+        line = line.replace("**", "").replace("__", "").replace("`", "")
         line = line.strip().lstrip("#*-> ").strip()
         if line:
             return line[:MAX_TEXT]
@@ -178,15 +182,17 @@ def show_banner(session, state, project_dir, title, message):
     if notifier:
         # Clicking opens our URI handler, which raises the right window and conversation.
         url = "vscode://sreekanth-anubolu.claude-code-conversation-alerts/open?session=" + urllib.parse.quote(session)
-        run([notifier, "-title", heading, "-subtitle", subtitle, "-message", message,
-             "-group", banner_group(session), "-open", url])
-    else:
-        # Not clickable, but still visible. Text goes in as argv, never into the script.
-        run(["osascript",
-             "-e", "on run argv",
-             "-e", "display notification (item 1 of argv) with title (item 2 of argv) subtitle (item 3 of argv)",
-             "-e", "end run",
-             message, heading, subtitle])
+        posted = run([notifier, "-title", heading, "-subtitle", subtitle, "-message", message,
+                      "-group", banner_group(session), "-open", url])
+        if posted:
+            return
+    # No terminal-notifier, or macOS has its notifications turned off. This banner
+    # isn't clickable, but it still shows. Text goes in as argv, never into the script.
+    run(["osascript",
+         "-e", "on run argv",
+         "-e", "display notification (item 1 of argv) with title (item 2 of argv) subtitle (item 3 of argv)",
+         "-e", "end run",
+         message, heading, subtitle])
 
 
 def remove_banner(session):
@@ -250,10 +256,12 @@ def try_remove(path):
 
 
 def run(cmd):
+    """Runs cmd quietly; True if it succeeded."""
     try:
-        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+        result = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
     except (OSError, subprocess.TimeoutExpired):
-        pass
+        return False
+    return result.returncode == 0
 
 
 if __name__ == "__main__":

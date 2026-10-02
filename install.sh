@@ -77,4 +77,5 @@ fi
 echo
 echo "Installed. Now:"
 echo "  1. In every open VS Code window: Cmd+Shift+P → Developer: Reload Window"
-echo "  2. Allow notifications when macOS asks (System Settings → Notifications → terminal-notifier)"
+echo "  2. In System Settings → Notifications → terminal-notifier: allow notifications and pick the"
+echo "     Alerts style, so alerts stay on screen until you answer (Banners vanish after ~5 seconds)."
